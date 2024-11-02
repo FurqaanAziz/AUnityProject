@@ -2,14 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-namespace CardGame 
-{ 
 
+namespace CardGame
+{
     public enum CardEvent
     {
-                Flipped,
-                Matched,
-                Mismatched
+        Flipped,
+        Matched,
+        Mismatched
     }
 
     public class Card : MonoBehaviour, ISubject, IPointerClickHandler
@@ -43,13 +43,8 @@ namespace CardGame
         {
             isFaceUp = !isFaceUp;
 
-            // Get the FrontImage and BackImage components
-            Transform frontImage = transform.Find("FrontImage");
-            Transform backImage = transform.Find("BackImage");
-
-            // Toggle visibility
-            frontImage.gameObject.SetActive(isFaceUp);
-            backImage.gameObject.SetActive(!isFaceUp);
+            // Change the sprite based on the card state
+            cardImage.sprite = isFaceUp ? faceSprite : backSprite;
 
             Notify(this, CardEvent.Flipped); // Notify observers about the flip
         }
@@ -63,7 +58,4 @@ namespace CardGame
             }
         }
     }
-
 }
-
-

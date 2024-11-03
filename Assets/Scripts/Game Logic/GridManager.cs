@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,11 +7,14 @@ namespace CardGame
 {
     public class GridManager : MonoBehaviour
     {
-        public GameObject cardPrefab; // Reference to the card prefab
-        public int rows = 3;          // Number of rows
-        public int columns = 3;       // Number of columns
-        public float spacing = 10f;    // Space between cards
-        public float aspectRatio = 1.0f; // Aspect ratio (width/height)
+        public List<GameObject> cardPrefabs; // List of card prefabs
+        public int rows = 6;                  // Number of rows
+        public int columns = 6;               // Number of columns
+        public float spacing = 10f;            // Space between cards
+        public float aspectRatio = 1.0f;       // Aspect ratio (width/height)
+
+        private Dictionary<string, int> prefabIDs = new Dictionary<string, int>();
+        private List<int> cardIDs = new List<int>();
 
         private void Start()
         {
@@ -27,7 +31,7 @@ namespace CardGame
                     columns = 2; // Ensure at least 2 columns
                 }
                 // Re-calculate rows to keep a minimum size
-                rows = Mathf.Clamp(rows, 2, 10);
+                rows = Mathf.Clamp(rows, 2, 6);
             }
 
             SetupGridLayout();
@@ -78,24 +82,63 @@ namespace CardGame
                 Destroy(child.gameObject);
             }
 
-            // Create a list of IDs for cards, ensuring each ID appears twice
-            List<int> cardIDs = new List<int>();
-            for (int i = 0; i < (rows * columns) / 2; i++)
+            cardIDs.Clear(); // Clear previous IDs
+            prefabIDs.Clear(); // Clear previous prefab IDs
+
+            int totalCards = rows * columns; // Total cards needed
+            int totalPairs = totalCards / 2; // Total pairs needed
+
+            // Create IDs based on card prefab names
+            foreach (var prefab in cardPrefabs)
             {
-                cardIDs.Add(i); // Add each ID once
-                cardIDs.Add(i); // Add each ID again for matching
+                if (!prefabIDs.ContainsKey(prefab.name))
+                {
+                    prefabIDs[prefab.name] = prefabIDs.Count; // Assign a new ID based on current count
+                }
+
+                int id = prefabIDs[prefab.name];
+
+                // Add the ID twice for matching pairs
+                cardIDs.Add(id);
+                cardIDs.Add(id);
+            }
+
+            // If we don't have enough pairs, repeat the available pairs
+            while (cardIDs.Count < totalCards)
+            {
+                foreach (var prefab in cardPrefabs)
+                {
+                    int id = prefabIDs[prefab.name];
+                    cardIDs.Add(id);
+                    cardIDs.Add(id);
+                    if (cardIDs.Count >= totalCards) break; // Stop if we reached the desired count
+                }
             }
 
             // Shuffle the list of IDs
             Shuffle(cardIDs);
 
+            // Log the size of cardIDs for debugging
+            Debug.Log($"Total cardIDs generated: {cardIDs.Count}");
+
             // Loop to create the grid of cards
-            for (int i = 0; i < rows * columns; i++)
+            for (int i = 0; i < totalCards; i++)
             {
-                GameObject cardInstance = Instantiate(cardPrefab, transform);
-                Card card = cardInstance.GetComponent<Card>();
-                card.id = cardIDs[i]; // Assign a shuffled ID to each card
-                card.Attach(FindObjectOfType<CardGameManager>());
+                int cardId = cardIDs[i]; // Get the ID from the shuffled list
+
+                // Find prefab name by ID
+                string prefabName = prefabIDs.FirstOrDefault(x => x.Value == cardId).Key;
+                if (prefabName != null)
+                {
+                    GameObject cardInstance = Instantiate(cardPrefabs.Find(p => p.name == prefabName), transform);
+                    Card card = cardInstance.GetComponent<Card>();
+                    card.id = cardId; // Assign the ID to the card
+                    card.Attach(FindObjectOfType<CardGameManager>());
+                }
+                else
+                {
+                    Debug.LogError($"Prefab name not found for ID: {cardId}");
+                }
             }
 
             // Update the layout after adding all cards

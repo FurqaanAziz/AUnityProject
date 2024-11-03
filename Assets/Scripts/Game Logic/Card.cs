@@ -55,11 +55,8 @@ namespace CardGame
             // Animate the flip
             float duration = 0.1f;
             float elapsedTime = 0f;
-
-            // Store the original rotation
             Quaternion originalRotation = transform.localRotation;
 
-            // First half: Flip to 90 degrees
             while (elapsedTime < duration / 2)
             {
                 elapsedTime += Time.deltaTime;
@@ -87,8 +84,6 @@ namespace CardGame
 
             // Ensure the rotation is exactly back to original
             transform.localRotation = originalRotation;
-
-            // Notify observers about the flip
             Notify(this, CardEvent.Flipped);
         }
 

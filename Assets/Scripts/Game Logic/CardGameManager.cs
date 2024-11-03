@@ -1,56 +1,59 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace CardGame
 {
     public class CardGameManager : MonoBehaviour, IObserver
     {
+        private Card firstCard;
+        private Card secondCard;
         private List<Card> flippedCards = new List<Card>();
-        public int score = 0;
+        private int matchesFound = 0;
 
-        public void OnNotify(Card card, CardEvent cardEvent)
+        public void CardClicked(Card clickedCard)
         {
-            switch (cardEvent)
+            if (firstCard == null)
             {
-                case CardEvent.Flipped:
-                    HandleCardFlipped(card);
-                    break;
-                case CardEvent.Matched:
-                    score += 10; // Increment score for a match
-                    break;
-                case CardEvent.Mismatched:
-                    // Handle mismatch logic (e.g., flip back after delay)
-                    break;
+                firstCard = clickedCard;
+                flippedCards.Add(firstCard);
             }
-        }
-
-        private void HandleCardFlipped(Card card)
-        {
-            flippedCards.Add(card);
-            if (flippedCards.Count == 2)
+            else if (secondCard == null && clickedCard != firstCard)
             {
+                secondCard = clickedCard;
+                flippedCards.Add(secondCard);
                 CheckForMatch();
             }
         }
 
         private void CheckForMatch()
         {
-            if (flippedCards[0].id == flippedCards[1].id)
+            if (firstCard.id == secondCard.id)
             {
                 // Cards match
-                flippedCards[0].Notify(flippedCards[0], CardEvent.Matched);
-                flippedCards[1].Notify(flippedCards[1], CardEvent.Matched);
+                matchesFound++;
+                firstCard.Notify(firstCard, CardEvent.Matched);
+                secondCard.Notify(secondCard, CardEvent.Matched);
+                firstCard = null;
+                secondCard = null; // Reset cards for the next turn
             }
             else
             {
-                // Cards do not match
-                // Optionally, add logic to flip them back
-                foreach (var card in flippedCards)
-                {
-                    card.Notify(card, CardEvent.Mismatched);
-                }
+                // Cards do not match, wait before flipping back
+                Invoke("ResetCards", 1f); // Delay before flipping back
             }
-            flippedCards.Clear(); // Clear flipped cards after checking
+        }
+
+        private void ResetCards()
+        {
+            firstCard.Flip(); // Flip back
+            secondCard.Flip(); // Flip back
+            firstCard = null;
+            secondCard = null; // Reset for the next turn
+        }
+
+        public void OnNotify(Card card, CardEvent cardEvent)
+        {
+            // Handle notifications if needed
         }
     }
 }

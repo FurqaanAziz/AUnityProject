@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,6 +22,7 @@ namespace CardGame
         private Image cardImage; // Reference to the Image component
 
         private List<IObserver> observers = new List<IObserver>();
+        private Coroutine flipCoroutine; // Reference to the flip coroutine
 
         void Start()
         {
@@ -41,12 +43,53 @@ namespace CardGame
 
         public void Flip()
         {
-            isFaceUp = !isFaceUp;
+            if (flipCoroutine != null)
+            {
+                StopCoroutine(flipCoroutine); // Stop any ongoing flip
+            }
+            flipCoroutine = StartCoroutine(FlipCard());
+        }
 
-            // Change the sprite based on the card state
+        private IEnumerator FlipCard()
+        {
+            // Animate the flip
+            float duration = 0.1f;
+            float elapsedTime = 0f;
+
+            // Store the original rotation
+            Quaternion originalRotation = transform.localRotation;
+
+            // First half: Flip to 90 degrees
+            while (elapsedTime < duration / 2)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / (duration / 2);
+                transform.localRotation = Quaternion.Slerp(originalRotation, originalRotation * Quaternion.Euler(0, 90, 0), t);
+                yield return null;
+            }
+
+            // Change the sprite after the first half
+            isFaceUp = !isFaceUp;
             cardImage.sprite = isFaceUp ? faceSprite : backSprite;
 
-            Notify(this, CardEvent.Flipped); // Notify observers about the flip
+            // Complete the first half of the flip
+            transform.localRotation = originalRotation * Quaternion.Euler(0, 90, 0);
+
+            // Second half: Flip back to original position
+            elapsedTime = 0f;
+            while (elapsedTime < duration / 2)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / (duration / 2);
+                transform.localRotation = Quaternion.Slerp(originalRotation * Quaternion.Euler(0, 90, 0), originalRotation, t);
+                yield return null;
+            }
+
+            // Ensure the rotation is exactly back to original
+            transform.localRotation = originalRotation;
+
+            // Notify observers about the flip
+            Notify(this, CardEvent.Flipped);
         }
 
         // Handle card click
@@ -55,6 +98,7 @@ namespace CardGame
             if (!isFaceUp) // Only flip if it's face down
             {
                 Flip();
+                FindObjectOfType<CardGameManager>().CardClicked(this); // Notify the CardGameManager
             }
         }
     }

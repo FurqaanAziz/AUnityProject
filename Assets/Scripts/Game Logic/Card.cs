@@ -50,13 +50,28 @@ namespace CardGame
             flipCoroutine = StartCoroutine(FlipCard());
         }
 
+        public void FlipImmediately()
+        {
+            if (cardImage != null) // Ensure cardImage is not null
+            {
+                isFaceUp = !isFaceUp;
+                cardImage.sprite = isFaceUp ? faceSprite : backSprite;
+                Notify(this, CardEvent.Flipped);
+            }
+            else
+            {
+                Debug.LogError("Card Image is not assigned. Please check the prefab.");
+            }
+        }
+
         private IEnumerator FlipCard()
         {
             // Animate the flip
-            float duration = 0.1f;
+            float duration = 0.5f; // Increased duration for better visibility
             float elapsedTime = 0f;
             Quaternion originalRotation = transform.localRotation;
 
+            // First half of the flip
             while (elapsedTime < duration / 2)
             {
                 elapsedTime += Time.deltaTime;
@@ -72,7 +87,7 @@ namespace CardGame
             // Complete the first half of the flip
             transform.localRotation = originalRotation * Quaternion.Euler(0, 90, 0);
 
-            // Second half: Flip back to original position
+            // Second half of the flip
             elapsedTime = 0f;
             while (elapsedTime < duration / 2)
             {

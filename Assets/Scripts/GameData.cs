@@ -7,7 +7,8 @@ namespace CardGame
     {
         public int matchesFound;
         public List<CardData> cardStates = new List<CardData>();
-        public List<int[]> matchedPairs = new List<int[]>(); // List of matched pairs
+        public int rows; // Store the number of rows
+        public int columns; // Store the number of columns
 
         [System.Serializable]
         public class CardData

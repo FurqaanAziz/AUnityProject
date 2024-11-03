@@ -8,8 +8,8 @@ namespace CardGame
     public class GridManager : MonoBehaviour
     {
         public List<GameObject> cardPrefabs; // List of card prefabs
-        public int rows = 6;                  // Number of rows
-        public int columns = 6;               // Number of columns
+        public int rows = 2;                  // Number of rows
+        public int columns = 2;               // Number of columns
         public float spacing = 10f;            // Space between cards
         public float aspectRatio = 1.0f;       // Aspect ratio (width/height)
 
@@ -18,10 +18,12 @@ namespace CardGame
 
         private void Start()
         {
-            // Ensure rows and columns are within the allowed range
-            rows = Mathf.Clamp(rows, 2, 6);
-            columns = Mathf.Clamp(columns, 2, 6);
+            SetupGridLayout();
+            CreateGrid(rows, columns);
+        }
 
+        public void CreateGrid(int rows, int columns)
+        {
             // Ensure the total number of cards is even
             if ((rows * columns) % 2 != 0)
             {
@@ -30,52 +32,9 @@ namespace CardGame
                 {
                     columns = 2; // Ensure at least 2 columns
                 }
-                // Re-calculate rows to keep a minimum size
                 rows = Mathf.Clamp(rows, 2, 6);
             }
 
-            SetupGridLayout();
-            CreateGrid(rows, columns);
-        }
-
-        private void SetupGridLayout()
-        {
-            GridLayoutGroup gridLayoutGroup = GetComponent<GridLayoutGroup>();
-            if (gridLayoutGroup == null)
-            {
-                Debug.LogError("GridLayoutGroup component not found on the GridManager.");
-                return;
-            }
-
-            RectTransform canvasRect = GetComponentInParent<Canvas>().GetComponent<RectTransform>();
-            Vector2 canvasSize = canvasRect.sizeDelta;
-
-            int padding = 10;
-            gridLayoutGroup.padding = new RectOffset(padding, padding, padding, padding);
-
-            float availableWidth = canvasSize.x - (padding * 2);
-            float availableHeight = canvasSize.y - (padding * 2);
-
-            float cellWidth = (availableWidth - (spacing * (columns - 1))) / columns;
-            float cellHeight = (availableHeight - (spacing * (rows - 1))) / rows;
-
-            if (cellWidth / cellHeight > aspectRatio)
-            {
-                cellWidth = cellHeight * aspectRatio;
-            }
-            else
-            {
-                cellHeight = cellWidth / aspectRatio;
-            }
-
-            gridLayoutGroup.cellSize = new Vector2(cellWidth, cellHeight);
-            gridLayoutGroup.spacing = new Vector2(spacing, spacing);
-            gridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            gridLayoutGroup.constraintCount = columns;
-        }
-
-        private void CreateGrid(int rows, int columns)
-        {
             // Clear existing children (if any) before creating a new grid
             foreach (Transform child in transform)
             {
@@ -118,9 +77,6 @@ namespace CardGame
             // Shuffle the list of IDs
             Shuffle(cardIDs);
 
-            // Log the size of cardIDs for debugging
-            Debug.Log($"Total cardIDs generated: {cardIDs.Count}");
-
             // Loop to create the grid of cards
             for (int i = 0; i < totalCards; i++)
             {
@@ -135,14 +91,46 @@ namespace CardGame
                     card.id = cardId; // Assign the ID to the card
                     card.Attach(FindObjectOfType<CardGameManager>());
                 }
-                else
-                {
-                    Debug.LogError($"Prefab name not found for ID: {cardId}");
-                }
             }
 
             // Update the layout after adding all cards
             LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
+        }
+
+        private void SetupGridLayout()
+        {
+            GridLayoutGroup gridLayoutGroup = GetComponent<GridLayoutGroup>();
+            if (gridLayoutGroup == null)
+            {
+                Debug.LogError("GridLayoutGroup component not found on the GridManager.");
+                return;
+            }
+
+            RectTransform canvasRect = GetComponentInParent<Canvas>().GetComponent<RectTransform>();
+            Vector2 canvasSize = canvasRect.sizeDelta;
+
+            int padding = 10;
+            gridLayoutGroup.padding = new RectOffset(padding, padding, padding, padding);
+
+            float availableWidth = canvasSize.x - (padding * 2);
+            float availableHeight = canvasSize.y - (padding * 2);
+
+            float cellWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+            float cellHeight = (availableHeight - (spacing * (rows - 1))) / rows;
+
+            if (cellWidth / cellHeight > aspectRatio)
+            {
+                cellWidth = cellHeight * aspectRatio;
+            }
+            else
+            {
+                cellHeight = cellWidth / aspectRatio;
+            }
+
+            gridLayoutGroup.cellSize = new Vector2(cellWidth, cellHeight);
+            gridLayoutGroup.spacing = new Vector2(spacing, spacing);
+            gridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            gridLayoutGroup.constraintCount = columns;
         }
 
         private void Shuffle(List<int> list)

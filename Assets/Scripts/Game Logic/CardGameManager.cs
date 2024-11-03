@@ -101,11 +101,13 @@ namespace CardGame
             }
         }
 
-        public void SaveGame()
+        public void SaveGame(int rows, int columns)
         {
             GameData data = new GameData
             {
                 matchesFound = matchesFound,
+                rows = rows,
+                columns = columns,
                 cardStates = new List<GameData.CardData>()
             };
 
@@ -135,15 +137,20 @@ namespace CardGame
                 matchesFound = data.matchesFound;
                 UpdateScoreText();
 
+                // Recreate the grid based on saved rows and columns
+                GridManager gridManager = FindObjectOfType<GridManager>();
+                gridManager.CreateGrid(data.rows, data.columns);
+
                 foreach (var cardData in data.cardStates)
                 {
                     Card card = FindCardById(cardData.id);
                     if (card != null)
                     {
+                        // Set the card state and flip it immediately
                         card.isFaceUp = cardData.isFaceUp;
                         if (card.isFaceUp)
                         {
-                            card.Flip(); // Flip the card to show it's face up
+                            card.FlipImmediately(); // Show the card's front without animation
                         }
                     }
                 }
@@ -182,7 +189,12 @@ namespace CardGame
         // Public methods for UI buttons
         public void OnSaveButtonClicked()
         {
-            SaveGame();
+            GridManager gridManager = FindObjectOfType<GridManager>();
+            if (gridManager != null)
+            {
+                // Save the current grid size
+                SaveGame(gridManager.rows, gridManager.columns);
+            }
         }
 
         public void OnLoadButtonClicked()

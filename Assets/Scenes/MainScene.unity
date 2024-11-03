@@ -1841,7 +1841,7 @@ MonoBehaviour:
   - {fileID: 2931094155885282415, guid: 71db54d2249736e4382a9f99d60669fc, type: 3}
   - {fileID: 2931094155885282415, guid: 10ac5595049d18b409934c7048f10cf2, type: 3}
   rows: 5
-  columns: 6
+  columns: 5
   spacing: 10
   aspectRatio: 1
 --- !u!114 &1594302710
